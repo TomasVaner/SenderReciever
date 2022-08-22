@@ -1,15 +1,16 @@
 #pragma once
 #include <deque>
 #include <mutex>
+#include <optional>
 
 namespace support
 {
     template <typename T> class CircularBuffer
     {
     public:
-        CircularBuffer (size_t capacity)
+        CircularBuffer (size_t capacity) :
             _capacity(capacity)
-        , _buffer_inner(capacity)
+            , _buffer_inner(capacity)
         {
 
         }
