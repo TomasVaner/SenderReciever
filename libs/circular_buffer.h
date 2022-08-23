@@ -39,7 +39,14 @@ namespace support
          */
         std::optional<T> Pop()
         {
-            return _buffer_inner.empty() ? std::nullopt : _buffer_inner.pop_front();
+            if (buffer_inner.empty())
+                return nullopt;
+            else
+            {
+                auto ret = _buffer_inner.front();
+                _buffer_inner.pop_back();
+                return ret;
+            }
         }
         /**
          * @brief Return the count of items in the buffer
