@@ -10,9 +10,7 @@ namespace support
     public:
         CircularBuffer (size_t capacity) :
             _capacity(capacity)
-            , _buffer_inner(capacity)
         {
-
         }
         /**
          * @brief Add an item to the buffer
