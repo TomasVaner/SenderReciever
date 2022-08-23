@@ -1,2 +1,5 @@
-enable_testing()
-add_subdirectory(CircularBuffer)
+if (USE_TEST)
+
+    include(GoogleTest)
+    add_subdirectory(CircularBuffer)
+endif(USE_TEST)
