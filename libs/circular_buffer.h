@@ -29,7 +29,7 @@ namespace support
                 _buffer_inner.pop_front();
                 ret = false;
             }
-            _buffer_inner.push_back();
+            _buffer_inner.push_back(item);
             return ret;
         }
         /**
@@ -39,12 +39,12 @@ namespace support
          */
         std::optional<T> Pop()
         {
-            if (buffer_inner.empty())
-                return nullopt;
+            if (_buffer_inner.empty())
+                return std::nullopt;
             else
             {
                 auto ret = _buffer_inner.front();
-                _buffer_inner.pop_back();
+                _buffer_inner.pop_front();
                 return ret;
             }
         }
