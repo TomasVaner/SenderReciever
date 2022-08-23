@@ -63,8 +63,15 @@ namespace support
             return _capacity;
         }
 
-        bool IsEmpty() const;
-        bool IsFull() const;
+        bool IsEmpty() const
+        {
+            return _buffer_inner.empty();
+        }
+
+        bool IsFull() const
+        {
+            return _buffer_inner.size() == _capacity;
+        }
 
     private:
         std::deque<T> _buffer_inner;
