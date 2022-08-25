@@ -11,11 +11,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-INCLUDE_DIRECTORIES(/usr/local/src/openssl-1.1.1q/include)
+find_package(OpenSSL REQUIRED)
+
 include(CTest)
 
 add_executable(sender sender.cpp)
+target_link_libraries(sender OpenSSL::SSL)
 add_executable(reciever reciever.cpp)
+target_link_libraries(reciever OpenSSL::SSL)
 
 option(USE_TEST "Use CTest" ON)
 
