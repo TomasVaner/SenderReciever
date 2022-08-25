@@ -38,7 +38,7 @@ private:
     pthread_t _socketThread = -1; //thread that recieves the packets and puts them into 
     pthread_t _processThread = -1; //thread that processes packets
     uint32_t _processDelay; //processing delay
-    support::CircularBuffer<std::vector<uint16_t>> _buffer; //circular buffer 
+    support::CircularBuffer<std::vector<uint8_t>> _buffer; //circular buffer 
     uint32_t _interBuffer_len = 4096;
 
     static void* socketRead(void*);

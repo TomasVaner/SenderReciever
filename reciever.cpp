@@ -75,12 +75,27 @@ void* Reciever::socketRead(void* obj_void)
     }
     else
     {
-        obj->_finalSocket = obj->_socket; 
+        obj->_finalSocket = obj->_socket;
         obj->_socket = -1;
     }
+    std::vector<uint8_t> buffer(obj->_interBuffer_len);
+    auto buffer_ptr = buffer.data();
     while(true)
     {
+        auto bytes_recv = recv(obj->_finalSocket, buffer_ptr, obj->_interBuffer_len, 0);
+        if (bytes_recv != -1)
+        {
+            std::vector<uint8_t> push_vector(buffer.data(), buffer.data() + bytes_recv);
 
+            if (obj->settings.log)
+            {
+                uint32_t packetId = *((uint32_t*)buffer.data());
+                const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+                std::cout << "Processed: #" << packetId 
+                    << " #" << boost::posix_time::to_iso_extended_string(now)
+                    << std::endl;
+            }
+        }
     }
 }
 
@@ -95,17 +110,20 @@ void* Reciever::process(void* obj_void)
             if (packet.has_value())
             {
                 uint8_t* ptr = (uint8_t*)packet->data();
-                uint32_t packetId = *((uint32_t*)ptr);
 
                 uint8_t hash[16];
                 md5(ptr, packet->size() - 16, hash);
                 bool pass = memcmp(hash, ptr + packet->size() - 16, 16) == 0;
 
-                const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
-                std::cout << "Processed: #" << packetId 
-                    << " #" << boost::posix_time::to_iso_extended_string(now) 
-                    << (pass ? " PASS" : " FAIL")
-                    << std::endl;
+                if (obj->settings.log)
+                {
+                    uint32_t packetId = *((uint32_t*)ptr);
+                    const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+                    std::cout << "Processed: #" << packetId 
+                        << " #" << boost::posix_time::to_iso_extended_string(now) 
+                        << (pass ? " PASS" : " FAIL")
+                        << std::endl;
+                }
                 usleep(obj->_processDelay);
             }
         }
