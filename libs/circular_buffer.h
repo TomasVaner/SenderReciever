@@ -21,6 +21,7 @@ namespace support
          */
         bool Push(T item)
         {
+            std::scoped_lock lock(_mutex);
             bool ret = true;
             if (_buffer_inner.size() == _capacity)
             {
@@ -37,6 +38,7 @@ namespace support
          */
         std::optional<T> Pop()
         {
+            std::scoped_lock lock(_mutex);
             if (_buffer_inner.empty())
                 return std::nullopt;
             else
