@@ -106,5 +106,25 @@ std::vector<uint8_t> RandomSender::getData()
 }
 
 int main(int, char**) {
-    
+    try
+    {
+        RandomSender sender(600, 1600, true, "127.0.0.1", 1992);
+        for (int i = 0; i < 1000; ++i)
+        {
+            sender.Send();
+            usleep(10);
+        }
+        usleep(10*1000);
+        for (int i = 0; i < 1000; ++i)
+        {
+            sender.Send();
+            usleep(10);
+        }
+    }
+    catch(std::exception& exc)
+    {
+        std::cerr << exc.what() << std::endl;
+        return -1;
+    }
+    return 0;
 }

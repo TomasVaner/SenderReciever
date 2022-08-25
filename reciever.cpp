@@ -51,6 +51,7 @@ Reciever::~Reciever()
 
 void Reciever::Run()
 {
+    Reciever::socketRead(this); //DEBUG
     if (pthread_create(&_socketThread, NULL, Reciever::socketRead, this))
         throw new std::system_error();
     if (pthread_create(&_processThread, NULL, Reciever::process, this))
@@ -69,7 +70,7 @@ void* Reciever::socketRead(void* obj_void)
     if (obj->settings.stream)
     {
         if (listen(obj->_socket, 5) < 0)
-            throw new connection_error("Count not connect to the sender");
+            throw new connection_error("Listen failed");
         if ((obj->_finalSocket = accept(obj->_socket, &obj->_senderAddr, &obj->_senderAddr_len)) < 0)
             throw new connection_error("Count not connect to the sender");
     }
@@ -132,5 +133,15 @@ void* Reciever::process(void* obj_void)
 
 
 int main(int, char**) {
-    
+    try
+    {
+        Reciever reciever(true, "127.0.0.1", 1992, 15, 16);
+        reciever.Run();
+    }
+    catch(std::exception& exc)
+    {
+        std::cerr << exc.what() << std::endl;
+        return -1;
+    }
+    return 0;
 }
