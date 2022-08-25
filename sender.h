@@ -1,17 +1,16 @@
 #pragma once
 #include <string>
-#include <istream>
 #include <memory>
 #include <vector>
 #include <tuple>
-#include <openssl/md5.h>
+#include <netinet/in.h>
 #include "errors.h"
 
 class Sender
 {
 public:
-    Sender(bool stream, std::string ip, int port);
-    ~Sender();
+    Sender(bool stream, std::string ip_str, int port);
+    virtual ~Sender();
 
 /**
  * @brief Sends data to the socket
@@ -33,11 +32,6 @@ public:
         return settings.log;
     }
 
-    void SetStream(bool value)
-    {
-        settings.stream = value;
-    }
-
     bool GetStream() const
     {
         return settings.stream;
@@ -51,20 +45,20 @@ public:
     bool IsAlive() const;
 
 private:
-    unsigned _packet_id = 0;
-    int _socket = -1;
+    uint32_t _packet_id = 0; //id of the packet to be sent (number of the packet)
+    int _socket = -1; //socket file handle
+    sockaddr_in _address; //address of the reciever
     union
     {
         struct
         {
-            bool log : 1;
-            bool stream : 1;
+            bool log : 1; //log into the console
+            bool stream : 1; //use tcp. false - use udp
             uint8_t _unused : 6;
         } settings { true, true, 0 };
         uint8_t _data;
     };
     std::vector<uint8_t> getPacket();
-protected: 
 /**
  * @brief Get the data to be sent in the packet
  * 
@@ -76,8 +70,9 @@ protected:
 class RandomSender : public Sender
 {
 public:
-    RandomSender(uint32_t lenFrom, uint32_t lenTo, bool stream, std::string ip, int port);
-    virtual std::vector<uint8_t> GetData() override;
+    RandomSender(uint32_t lenFrom, uint32_t lenTo, bool stream, std::string ip_str, int port);
 private:
-    uint32_t lenFrom, lenTo;
+    uint32_t _lenFrom, _lenTo; //range of the length of the data to be generated. 16-bit words count
+
+    virtual std::vector<uint8_t> getData() override;
 };
