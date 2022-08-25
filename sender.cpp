@@ -1,4 +1,5 @@
 #include "sender.h"
+#include <iostream>
 #include <strings.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -6,6 +7,7 @@
 #include <memory.h>
 #include "libs/aux_functions.h"
 #include <unistd.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 Sender::Sender(bool stream, std::string ip_str, int port)
 {
@@ -50,7 +52,16 @@ bool Sender::Send()
 {
     //sending the packet
     auto buffer = getPacket();
-    return send(_socket, &buffer[0], buffer.size(), 0);
+    bool sent = send(_socket, buffer.data(), buffer.size(), 0) != -1;
+    if (sent && settings.log)
+    {
+        uint32_t packetId = *((uint32_t*)buffer.data());
+        const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+        std::cout << "Processed: #" << packetId 
+            << " #" << boost::posix_time::to_iso_extended_string(now)
+            << std::endl;
+    }
+    return sent;
 }
 
 std::vector<uint8_t> Sender::getPacket()
