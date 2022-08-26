@@ -84,9 +84,13 @@ void* Reciever::socketRead(void* obj_void)
     {
         uint32_t packet_len;
         auto bytes_recv = recv(obj->_finalSocket, &packet_len, sizeof(packet_len), MSG_WAITALL);
+        if (bytes_recv == -1)
+        {
+            throw new connection_error("Could not read length of the packet from the socket");
+        }
         buffer.resize(packet_len);
         auto buffer_ptr = buffer.data();
-        auto bytes_recv = recv(obj->_finalSocket, buffer.data(), packet_len, MSG_WAITALL);
+        bytes_recv = recv(obj->_finalSocket, buffer.data(), packet_len, MSG_WAITALL);
         if (bytes_recv != -1)
         {
             obj->_buffer.Push(buffer); //pushing packet to the circular buffer
