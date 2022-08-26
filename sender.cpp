@@ -45,10 +45,7 @@ ssize_t Sender::Send()
     //connection is established only if we use TCP
     if (!_connected && settings.stream)
     {
-        if(connect(_socket, (sockaddr*) &_address, sizeof(_address)) < 0)
-        {
-            throw new connection_error("Could not connect to the reciever");
-        }
+        while(connect(_socket, (sockaddr*) &_address, sizeof(_address)) < 0); //for some reason connect does not block execution for me. 
         _connected = true;
     }
     //sending the packet
