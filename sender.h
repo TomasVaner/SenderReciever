@@ -18,7 +18,7 @@ public:
  * @return true - data was sent
  * @return false - there was an error during sending
  */
-    bool Send();
+    ssize_t Send();
 
 //Setters and getters
 
@@ -48,6 +48,7 @@ private:
     uint32_t _packet_id = 0; //id of the packet to be sent (number of the packet)
     int _socket = -1; //socket file handle
     sockaddr_in _address; //address of the reciever
+    bool _connected = false;
     union
     {
         struct
