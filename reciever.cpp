@@ -143,10 +143,20 @@ void* Reciever::process(void* obj_void)
 }
 
 
-int main(int, char**) {
+int main(int argc, char** argv) {
+    bool stream = true;
+    std::string ip_str = "127.0.0.1";
+    int port = 1992;
+    if (argc == 4)
+    {
+        stream = strcmp(argv[1], "tcp") == 0;
+        ip_str = argv[2];
+        port = std::atoi(argv[3]);
+    }
+
     try
     {
-        Reciever reciever(true, "127.0.0.1", 1992, 15, 16);
+        Reciever reciever(stream, ip_str, port, 15, 16);
         reciever.Run();
     }
     catch(std::exception& exc)

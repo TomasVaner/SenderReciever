@@ -118,17 +118,29 @@ std::vector<uint8_t> RandomSender::getData()
     return data;
 }
 
-int main(int, char**) {
+int main(int argc, char** argv) {
     try
     {
-        RandomSender sender(600, 1600, true, "127.0.0.1", 1992);
-        for (int i = 0; i < 1000; ++i)
+        bool stream = true;
+        std::string ip_str = "127.0.0.1";
+        int port = 1992;
+        int packet_count = 1000;
+        if (argc == 5)
+        {
+            stream = strcmp(argv[1], "tcp") == 0;
+            ip_str = argv[2];
+            port = std::atoi(argv[3]);
+            packet_count = std::atoi(argv[4]);
+        }
+
+        RandomSender sender(600, 1600, stream, ip_str, port);
+        for (int i = 0; i < packet_count; ++i)
         {
             sender.Send();
             usleep(10*1000);
         }
         usleep(10*1000*1000);
-        for (int i = 0; i < 1000; ++i)
+        for (int i = 0; i < packet_count; ++i)
         {
             sender.Send();
             usleep(10*1000);
