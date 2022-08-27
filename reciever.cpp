@@ -79,14 +79,21 @@ void* Reciever::socketRead(void* obj_void)
         obj->_finalSocket = obj->_socket;
         obj->_socket = -1;
     }
-    std::vector<uint8_t> buffer(obj->_interBuffer_len);
-    auto buffer_ptr = buffer.data();
+    std::vector<uint8_t> buffer;
     while(true)
     {
-        auto bytes_recv = recv(obj->_finalSocket, buffer_ptr, obj->_interBuffer_len, 0);
+        uint32_t packet_len;
+        auto bytes_recv = recv(obj->_finalSocket, &packet_len, sizeof(packet_len), MSG_WAITALL);
+        if (bytes_recv == -1)
+        {
+            throw new connection_error("Could not read length of the packet from the socket");
+        }
+        buffer.resize(packet_len);
+        auto buffer_ptr = buffer.data();
+        bytes_recv = recv(obj->_finalSocket, buffer.data(), packet_len, MSG_WAITALL);
         if (bytes_recv != -1)
         {
-            std::vector<uint8_t> push_vector(buffer.data(), buffer.data() + bytes_recv);
+            obj->_buffer.Push(buffer); //pushing packet to the circular buffer
 
             if (obj->settings.log)
             {

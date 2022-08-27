@@ -24,10 +24,6 @@ public:
     ~Reciever();
     //Start the threads
     void Run();
-    void SetInterBufferLen(uint32_t value)
-    {
-        _interBuffer_len = value;
-    }
 private:
     int _socket = -1; //socket file handle
     int _finalSocket = -1; //socket file handle
@@ -39,7 +35,6 @@ private:
     pthread_t _processThread = -1; //thread that processes packets
     uint32_t _processDelay; //processing delay
     support::CircularBuffer<std::vector<uint8_t>> _buffer; //circular buffer 
-    uint32_t _interBuffer_len = 4096;
 
     static void* socketRead(void*);
     static void* process(void*);

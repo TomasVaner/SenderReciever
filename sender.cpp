@@ -31,14 +31,6 @@ Sender::Sender(bool stream, std::string ip_str, int port)
         throw new connection_error("Could not convert IP");
 
     _address.sin_addr.s_addr = inet_addr(ip_str.c_str());
-    //connection is established only if we use TCP
-    if (settings.stream)
-    {
-        if(connect(_socket, (sockaddr*) &_address, sizeof(_address)) < 0)
-        {
-            throw new connection_error("Could not connect to the reciever");
-        }
-    }
 }
 
 Sender::~Sender()
@@ -48,37 +40,58 @@ Sender::~Sender()
         close(_socket);
 }
 
-bool Sender::Send()
+ssize_t Sender::Send()
 {
+    //connection is established only if we use TCP
+    if (!_connected && settings.stream)
+    {
+        while(connect(_socket, (sockaddr*) &_address, sizeof(_address)) < 0); //for some reason connect does not block execution for me. 
+        _connected = true;
+    }
     //sending the packet
     auto buffer = getPacket();
-    bool sent = send(_socket, buffer.data(), buffer.size(), 0) != -1;
-    if (sent && settings.log)
+    uint32_t packetLen = buffer.size(); //we don't use size_t in case reciever is compiled as a x32 app
+    auto len_sent = send(_socket, &packetLen, sizeof(packetLen), settings.stream ? MSG_CONFIRM : 0);
+
+    if (len_sent < 0)
+    {
+        throw new connection_error("Could not send data to reciever");
+    }
+    auto data_sent = send(_socket, buffer.data(), buffer.size(), 0);
+    if (data_sent < 0)
+    {
+        throw new connection_error("Could not send data to reciever");
+    }
+    if (settings.log)
     {
         uint32_t packetId = *((uint32_t*)buffer.data());
-        const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
-        std::cout << "Processed: #" << packetId 
-            << " #" << boost::posix_time::to_iso_extended_string(now)
+        const boost::posix_time::ptime now = *((boost::posix_time::ptime*)(buffer.data() + sizeof(packetId)));
+        std::cout << "Sent: #" << packetId 
+            << " #" << boost::posix_time::to_iso_extended_string(now) << " UTC"
             << std::endl;
     }
-    return sent;
+    return len_sent + data_sent;
 }
 
 std::vector<uint8_t> Sender::getPacket()
 {
     //getting the data to be set (defined in derived classes)
     auto data = getData();
-    std::vector<uint8_t> packet(data.size() + 16 + sizeof(_packet_id)); //4 bytes for packet id, 16 bytes for md5
+    boost::posix_time::ptime now;
+    std::vector<uint8_t> packet(data.size() + 16 + sizeof(_packet_id) + sizeof(now)); //4 bytes for packet id, 16 bytes for md5
     //setting the writing pointer to the packet beginning
     auto ptr = packet.data();
     //writing packet id
     *((uint32_t*)(ptr)) = _packet_id++;
     ptr += sizeof(_packet_id);
+    now = boost::posix_time::microsec_clock::universal_time();
+    memcpy(ptr, &now, sizeof(now));
+    ptr += sizeof(now);
     //copying the data
     memcpy (ptr, data.data(), data.size());
     ptr += data.size();
     //calculating checksum
-    md5(&packet[0], sizeof(_packet_id) + data.size(), ptr);
+    md5(&packet[0], sizeof(_packet_id) + data.size() + sizeof(now), ptr);
     return packet;
 }
 
@@ -112,13 +125,13 @@ int main(int, char**) {
         for (int i = 0; i < 1000; ++i)
         {
             sender.Send();
-            usleep(10);
+            usleep(10*1000);
         }
-        usleep(10*1000);
+        usleep(10*1000*1000);
         for (int i = 0; i < 1000; ++i)
         {
             sender.Send();
-            usleep(10);
+            usleep(10*1000);
         }
     }
     catch(std::exception& exc)
