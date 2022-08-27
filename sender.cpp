@@ -65,9 +65,9 @@ ssize_t Sender::Send()
     if (settings.log)
     {
         uint32_t packetId = *((uint32_t*)buffer.data());
-        const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
-        std::cout << "Processed: #" << packetId 
-            << " #" << boost::posix_time::to_iso_extended_string(now)
+        const boost::posix_time::ptime now = *((boost::posix_time::ptime*)(buffer.data() + sizeof(packetId)));
+        std::cout << "Sent: #" << packetId 
+            << " #" << boost::posix_time::to_iso_extended_string(now) << " UTC"
             << std::endl;
     }
     return len_sent + data_sent;
@@ -77,17 +77,21 @@ std::vector<uint8_t> Sender::getPacket()
 {
     //getting the data to be set (defined in derived classes)
     auto data = getData();
-    std::vector<uint8_t> packet(data.size() + 16 + sizeof(_packet_id)); //4 bytes for packet id, 16 bytes for md5
+    boost::posix_time::ptime now;
+    std::vector<uint8_t> packet(data.size() + 16 + sizeof(_packet_id) + sizeof(now)); //4 bytes for packet id, 16 bytes for md5
     //setting the writing pointer to the packet beginning
     auto ptr = packet.data();
     //writing packet id
     *((uint32_t*)(ptr)) = _packet_id++;
     ptr += sizeof(_packet_id);
+    now = boost::posix_time::microsec_clock::universal_time();
+    memcpy(ptr, &now, sizeof(now));
+    ptr += sizeof(now);
     //copying the data
     memcpy (ptr, data.data(), data.size());
     ptr += data.size();
     //calculating checksum
-    md5(&packet[0], sizeof(_packet_id) + data.size(), ptr);
+    md5(&packet[0], sizeof(_packet_id) + data.size() + sizeof(now), ptr);
     return packet;
 }
 
