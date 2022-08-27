@@ -99,9 +99,11 @@ void* Reciever::socketRead(void* obj_void)
             {
                 uint32_t packetId = *((uint32_t*)buffer.data());
                 const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
-                std::cout << "Processed: #" << packetId 
+                std::stringstream output; //using stringstream for thread-safety of output
+                output << "Received: #" << packetId 
                     << " #" << boost::posix_time::to_iso_extended_string(now)
                     << std::endl;
+                std::cout << output.str();
             }
         }
     }
@@ -127,10 +129,12 @@ void* Reciever::process(void* obj_void)
                 {
                     uint32_t packetId = *((uint32_t*)ptr);
                     const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
-                    std::cout << "Processed: #" << packetId 
+                    std::stringstream output; //using stringstream for thread-safety of output
+                    output << "Processed: #" << packetId 
                         << " #" << boost::posix_time::to_iso_extended_string(now) 
                         << (pass ? " PASS" : " FAIL")
                         << std::endl;
+                    std::cout << output.str();
                 }
                 usleep(obj->_processDelay);
             }
