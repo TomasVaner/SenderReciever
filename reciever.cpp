@@ -51,7 +51,6 @@ Reciever::~Reciever()
 
 void Reciever::Run()
 {
-    Reciever::socketRead(this); //DEBUG
     if (pthread_create(&_socketThread, NULL, Reciever::socketRead, this))
         throw new std::system_error();
     if (pthread_create(&_processThread, NULL, Reciever::process, this))
