@@ -54,7 +54,7 @@ private:
     int _socket = -1; //socket file handle
     int _finalSocket = -1; //socket file handle
     sockaddr_in _address; //address of the reciever
-    struct sockaddr _senderAddr; //address of sender
+    struct sockaddr_in _senderAddr; //address of sender
     socklen_t _senderAddr_len;
 
     pthread_t _socketThread = -1; //thread that recieves the packets and puts them into 
@@ -62,6 +62,7 @@ private:
     uint32_t _processDelay; //processing delay
     support::CircularBuffer<std::vector<uint8_t>> _buffer; //circular buffer 
 
+    bool _error = false;
     static void* socketRead(void*);
     static void* process(void*);
     union

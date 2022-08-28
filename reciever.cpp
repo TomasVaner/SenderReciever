@@ -32,7 +32,7 @@ Reciever::Reciever(bool stream, std::string ip_str, int port, uint32_t processDe
     _address.sin_port = htons(port);
     //checking whether ip string is in the right format
     struct in_addr addr;
-    if (inet_aton(ip_str.c_str(), &addr) < 0)
+    if (inet_pton(AF_INET, ip_str.c_str(), &addr) < 0)
         throw new connection_error("Could not convert IP");
 
     _address.sin_addr.s_addr = inet_addr(ip_str.c_str());
@@ -67,8 +67,17 @@ void Reciever::Run()
             std::cerr << "Encountered error " << code << " when creating the thread" << std::endl;
         throw new std::system_error();
     }
+    pthread_attr_destroy(&attrs);
+    try
+    {
+        Reciever::socketRead(this);
+    }
+    catch (const std::exception& exc)
+    {
+        _error = true;
+        throw;
+    }
     void** ret;
-    pthread_join(_socketThread, ret);
     pthread_join(_processThread, ret);
 }
 
@@ -109,7 +118,7 @@ void* Reciever::socketRead(void* obj_void)
         obj->_socket = -1;
     }
     std::vector<uint8_t> buffer;
-    while(true)
+    while(!obj->_error)
     {
         int bytes_in_buffer = -1;
         if (ioctl(obj->_finalSocket, FIONREAD, &bytes_in_buffer) < 0) {
