@@ -2,6 +2,7 @@
 #include <strings.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <arpa/inet.h>
 #include <memory.h>
 #include "libs/aux_functions.h"
@@ -81,6 +82,13 @@ void* Reciever::socketRead(void* obj_void)
     std::vector<uint8_t> buffer;
     while(true)
     {
+        int bytes_in_buffer = -1;
+        if (ioctl(obj->_finalSocket, FIONREAD, &bytes_in_buffer) < 0) {
+            std::cerr << std::strerror(errno) << std::endl;
+            throw connection_error("Checking readable bytes failed");
+        }
+        if (bytes_in_buffer <= 0)
+            continue;
         uint32_t packet_len;
         auto bytes_recv = recv(obj->_finalSocket, &packet_len, sizeof(packet_len), MSG_WAITALL);
         if (bytes_recv == -1)
