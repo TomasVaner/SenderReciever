@@ -144,15 +144,16 @@ void* Reciever::socketRead(void* obj_void)
             if (obj->GetLog())
             {
                 uint32_t packetId = *((uint32_t*)buffer.data());
-                const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+                const boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
                 std::stringstream output; //using stringstream for thread-safety of output
                 output << "Received: #" << packetId 
-                    << " #" << boost::posix_time::to_iso_extended_string(now)
+                    << " #" << boost::posix_time::to_iso_extended_string(now) << " UTC"
                     << std::endl;
                 std::cout << output.str();
             }
         }
     }
+    static int ret = 0;
     return &ret;
 }
 
