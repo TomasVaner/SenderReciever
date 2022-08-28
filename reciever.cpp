@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <system_error>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <chrono>
+#include <thread>
 
 Reciever::Reciever(bool stream, std::string ip_str, int port, uint32_t processDelay, size_t bufferCapacity) :
     _buffer(bufferCapacity),
@@ -160,6 +162,7 @@ void* Reciever::socketRead(void* obj_void)
 void* Reciever::process(void* obj_void)
 {
     auto obj = (Reciever*)obj_void;
+    std::chrono::milliseconds delay_process(obj->_processDelay);
     if (obj->GetVerbose())
         std::cout << "Waiting for packets" << std::endl;
     while (!obj->_error)
@@ -186,7 +189,7 @@ void* Reciever::process(void* obj_void)
                         << std::endl;
                     std::cout << output.str();
                 }
-                usleep(obj->_processDelay);
+                std::this_thread::sleep_for(delay_process);
             }
         }
     }

@@ -8,6 +8,8 @@
 #include "libs/aux_functions.h"
 #include <unistd.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <chrono>
+#include <thread>
 
 Sender::Sender(bool stream, std::string ip_str, int port)
 {
@@ -135,6 +137,8 @@ std::vector<uint8_t> RandomSender::getData()
 }
 
 int main(int argc, char** argv) {
+    std::chrono::milliseconds delay_betweenPackets(10);
+    std::chrono::seconds delay_betweenQuesues(10);
     try
     {
         bool stream = true;
@@ -153,13 +157,13 @@ int main(int argc, char** argv) {
         for (int i = 0; i < packet_count; ++i)
         {
             sender.Send();
-            usleep(10*1000);
+            std::this_thread::sleep_for(delay_betweenPackets);
         }
-        usleep(10*1000*1000);
+        std::this_thread::sleep_for(delay_betweenQuesues);
         for (int i = 0; i < packet_count; ++i)
         {
             sender.Send();
-            usleep(10*1000);
+            std::this_thread::sleep_for(delay_betweenPackets);
         }
     }
     catch(std::exception& exc)

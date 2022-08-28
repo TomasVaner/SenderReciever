@@ -70,8 +70,9 @@ private:
         {
             bool log : 1; //log into the console
             bool stream : 1; //use tcp. false - use udp
-            uint8_t _unused : 6;
-        } settings { true, true, 0 };
+            bool verbose : 1; //verbose output
+            uint8_t _unused : 5;
+        } settings { true, true, true, 0 };
         uint8_t _data;
     };
 };
