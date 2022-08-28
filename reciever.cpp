@@ -52,11 +52,17 @@ Reciever::~Reciever()
 
 void Reciever::Run()
 {
-    if (pthread_create(&_socketThread, NULL, Reciever::socketRead, this))
-        throw new std::system_error();
-    if (pthread_create(&_processThread, NULL, Reciever::process, this))
+    pthread_attr_t attrs;
+    pthread_attr_init(&attrs);
+    if (GetVerbose())
     {
-        pthread_cancel(_socketThread);
+        std::cout << "Creating a process thread\n";
+    }
+    auto code = pthread_create(&_socketThread, &attrs, Reciever::process, this);
+    if (code)
+    {
+        if (GetVerbose())
+            std::cerr << "Encountered error " << code << " when creating the thread" << std::endl;
         throw new std::system_error();
     }
     void** ret;
@@ -69,10 +75,31 @@ void* Reciever::socketRead(void* obj_void)
     const auto obj = (Reciever*)obj_void;
     if (obj->settings.stream)
     {
+        if (obj->GetVerbose())
+        {
+            std::cout << "Listening the socket" << std::endl;
+        }
         if (listen(obj->_socket, 5) < 0)
-            throw new connection_error("Listen failed");
-        if ((obj->_finalSocket = accept(obj->_socket, &obj->_senderAddr, &obj->_senderAddr_len)) < 0)
-            throw new connection_error("Count not connect to the sender");
+        {
+            if (obj->GetVerbose())
+                std::cerr << std::strerror(errno) << std::endl;
+            throw connection_error("Listen failed");
+        }
+        if (obj->GetVerbose())
+        {
+            std::cout << "Awaiting the connection" << std::endl;
+        }
+        obj->_senderAddr_len = sizeof(obj->_senderAddr);
+        while ((obj->_finalSocket = accept(obj->_socket, (sockaddr*)&obj->_senderAddr, &obj->_senderAddr_len)) < 0);
+        if (obj->GetVerbose())
+        {
+            char senderIp_str[1024];
+            inet_ntop(AF_INET, &(obj->_senderAddr.sin_addr), senderIp_str, INET_ADDRSTRLEN);
+            int senderPort = ntohs(obj->_senderAddr.sin_port);
+            std::stringstream output;
+            output << "Sender: " << senderIp_str << ":" << senderPort << std::endl;
+            std::cout << output.str();
+        }
     }
     else
     {
@@ -89,20 +116,32 @@ void* Reciever::socketRead(void* obj_void)
         }
         if (bytes_in_buffer <= 0)
             continue;
+        if (obj->GetVerbose())
+        {
+            std::stringstream output;
+            output << "There is " << bytes_in_buffer << " bytes in the socket" << std::endl;
+            std::cout << output.str();
+        }
         uint32_t packet_len;
         auto bytes_recv = recv(obj->_finalSocket, &packet_len, sizeof(packet_len), MSG_WAITALL);
         if (bytes_recv == -1)
         {
-            throw new connection_error("Could not read length of the packet from the socket");
+            throw connection_error("Could not read length of the packet from the socket");
         }
         buffer.resize(packet_len);
         auto buffer_ptr = buffer.data();
         bytes_recv = recv(obj->_finalSocket, buffer.data(), packet_len, MSG_WAITALL);
         if (bytes_recv != -1)
         {
+            if (obj->GetVerbose())
+            {
+                std::stringstream output;
+                output << "Read " << bytes_recv << " bytes from the socket" << std::endl;
+                std::cout << output.str();
+            }
             obj->_buffer.Push(buffer); //pushing packet to the circular buffer
 
-            if (obj->settings.log)
+            if (obj->GetLog())
             {
                 uint32_t packetId = *((uint32_t*)buffer.data());
                 const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
@@ -114,12 +153,15 @@ void* Reciever::socketRead(void* obj_void)
             }
         }
     }
+    return &ret;
 }
 
 void* Reciever::process(void* obj_void)
 {
     auto obj = (Reciever*)obj_void;
-    while (true)
+    if (obj->GetVerbose())
+        std::cout << "Waiting for packets" << std::endl;
+    while (!obj->_error)
     {
         if (!obj->_buffer.IsEmpty())
         {
@@ -132,7 +174,7 @@ void* Reciever::process(void* obj_void)
                 md5(ptr, packet->size() - 16, hash);
                 bool pass = memcmp(hash, ptr + packet->size() - 16, 16) == 0;
 
-                if (obj->settings.log)
+                if (obj->GetLog())
                 {
                     uint32_t packetId = *((uint32_t*)ptr);
                     const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
@@ -147,6 +189,9 @@ void* Reciever::process(void* obj_void)
             }
         }
     }
+    static int ret = 0;
+    pthread_exit(&ret);
+    return &ret;
 }
 
 

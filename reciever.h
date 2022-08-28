@@ -22,6 +22,32 @@ public:
  */
     Reciever(bool stream, std::string ip_str, int port, uint32_t processDelay = 15, size_t bufferCapacity = 16);
     ~Reciever();
+    //Setters and getters
+
+    void SetLog(bool value)
+    {
+        settings.log = value;
+    }
+
+    bool GetLog() const
+    {
+        return settings.log;
+    }
+
+    void SetVerbose(bool value)
+    {
+        settings.verbose = value;
+    }
+
+    bool GetVerbose() const
+    {
+        return settings.log && settings.verbose;
+    }
+
+    bool GetStream() const
+    {
+        return settings.stream;
+    }
     //Start the threads
     void Run();
 private:

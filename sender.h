@@ -32,18 +32,20 @@ public:
         return settings.log;
     }
 
+    void SetVerbose(bool value)
+    {
+        settings.verbose = value;
+    }
+
+    bool GetVerbose() const
+    {
+        return settings.log && settings.verbose;
+    }
+
     bool GetStream() const
     {
         return settings.stream;
     }
-/**
- * @brief Checks if the socket is still alive
- * 
- * @return true 
- * @return false 
- */
-    bool IsAlive() const;
-
 private:
     uint32_t _packet_id = 0; //id of the packet to be sent (number of the packet)
     int _socket = -1; //socket file handle
@@ -55,8 +57,9 @@ private:
         {
             bool log : 1; //log into the console
             bool stream : 1; //use tcp. false - use udp
-            uint8_t _unused : 6;
-        } settings { true, true, 0 };
+            bool verbose : 1; //verbose output
+            uint8_t _unused : 5;
+        } settings { true, true, true, 0 };
         uint8_t _data;
     };
     std::vector<uint8_t> getPacket();

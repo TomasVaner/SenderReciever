@@ -45,24 +45,40 @@ ssize_t Sender::Send()
     //connection is established only if we use TCP
     if (!_connected && settings.stream)
     {
+        if (GetVerbose())
+        {
+            std::cout << "Connecting to the reciever" << std::endl;
+        }
         while(connect(_socket, (sockaddr*) &_address, sizeof(_address)) < 0); //for some reason connect does not block execution for me. 
         _connected = true;
+        if (GetVerbose())
+        {
+            std::cout << "Connection to the reciever was established" << std::endl;
+        }
     }
     //sending the packet
     auto buffer = getPacket();
     uint32_t packetLen = buffer.size(); //we don't use size_t in case reciever is compiled as a x32 app
+    if (GetVerbose())
+    {
+        std::cout << "Sending packet" << std::endl;
+    }
     auto len_sent = send(_socket, &packetLen, sizeof(packetLen), settings.stream ? MSG_CONFIRM : 0);
 
     if (len_sent < 0)
     {
+        if (GetVerbose())
+            std::cerr << std::strerror(errno) << std::endl;
         throw new connection_error("Could not send data to reciever");
     }
     auto data_sent = send(_socket, buffer.data(), buffer.size(), 0);
     if (data_sent < 0)
     {
+        if (GetVerbose())
+            std::cerr << std::strerror(errno) << std::endl;
         throw new connection_error("Could not send data to reciever");
     }
-    if (settings.log)
+    if (GetLog())
     {
         uint32_t packetId = *((uint32_t*)buffer.data());
         const boost::posix_time::ptime now = *((boost::posix_time::ptime*)(buffer.data() + sizeof(packetId)));
