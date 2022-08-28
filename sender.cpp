@@ -65,7 +65,9 @@ ssize_t Sender::Send()
     {
         std::cout << "Sending packet" << std::endl;
     }
-    auto len_sent = send(_socket, &packetLen, sizeof(packetLen), settings.stream ? MSG_CONFIRM : 0);
+    auto len_sent = GetStream()
+        ? send(_socket, &packetLen, sizeof(packetLen), MSG_CONFIRM)
+        : sendto(_socket, &packetLen, sizeof(packetLen), MSG_CONFIRM, (sockaddr *) &_address, sizeof(_address));
 
     if (len_sent < 0)
     {
@@ -73,7 +75,9 @@ ssize_t Sender::Send()
             std::cerr << std::strerror(errno) << std::endl;
         throw new connection_error("Could not send data to reciever");
     }
-    auto data_sent = send(_socket, buffer.data(), buffer.size(), 0);
+    auto data_sent = GetStream()
+        ? send(_socket, buffer.data(), buffer.size(), MSG_CONFIRM)
+        : sendto(_socket, buffer.data(), buffer.size(), MSG_CONFIRM, (sockaddr *) &_address, sizeof(_address));
     if (data_sent < 0)
     {
         if (GetVerbose())
