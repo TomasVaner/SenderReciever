@@ -11,11 +11,18 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-INCLUDE_DIRECTORIES(/usr/local/src/openssl-1.1.1q/include)
+find_package(OpenSSL REQUIRED)
+
 include(CTest)
 
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+
 add_executable(sender sender.cpp)
+target_link_libraries(sender OpenSSL::SSL)
 add_executable(reciever reciever.cpp)
+target_link_libraries(reciever OpenSSL::SSL Threads::Threads)
 
 option(USE_TEST "Use CTest" ON)
 
